@@ -40,8 +40,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'commerce.apps.CommerceConfig',
     'cloudinary',
-    'ckeditor',
-    'ckeditor_uploader'
 ]
 
 MIDDLEWARE = [
@@ -87,6 +85,7 @@ DATABASES = {
     }
 }
 
+CKEDITOR_UPLOAD_PATH = "images/products/"
 AUTH_USER_MODEL = 'commerce.User'
 
 import pymysql
@@ -100,7 +99,7 @@ from cloudinary.utils import cloudinary_url
 cloudinary.config(
     cloud_name = "disqxvj3s",
     api_key = "591477333856363",
-    api_secret = "<your_api_secret>", # Click 'View API Keys' above to copy your API secret
+    api_secret = "R_tdHJCqiow28KiCrgzMQsRVe8c", # Click 'View API Keys' above to copy your API secret
     secure=True
 )
 
