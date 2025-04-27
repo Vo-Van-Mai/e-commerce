@@ -6,6 +6,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
+from ckeditor.fields import RichTextField
 from unicodedata import category
 
 
@@ -65,7 +66,7 @@ class Product(BaseModel):
         SOLD_OUT = "sold_out", "Hết hàng"
     name = models.CharField(max_length=100, verbose_name="Tên sản phẩm")
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Giá")
-    description = models.TextField()
+    description = RichTextField()
     image = CloudinaryField('image', blank=True, null=True)
     quantity = models.IntegerField(default=0)
     status = models.CharField(

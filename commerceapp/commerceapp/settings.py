@@ -40,6 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'commerce.apps.CommerceConfig',
     'cloudinary',
+    'ckeditor',
+    'ckeditor_uploader',
+    'rest_framework',
+    'drf_yasg',
 ]
 
 MIDDLEWARE = [
@@ -85,7 +89,7 @@ DATABASES = {
     }
 }
 
-CKEDITOR_UPLOAD_PATH = "images/products/"
+CKEDITOR_UPLOAD_PATH = "ckeditor/products/"
 AUTH_USER_MODEL = 'commerce.User'
 
 import pymysql

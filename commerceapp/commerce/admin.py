@@ -6,12 +6,29 @@ from django.contrib import admin
 from .models import Product, User, Role, Category, Shop, Order, OrderDetail, Payment, Comment, Like, ChatMessage, Conversation
 from django.template.response import TemplateResponse
 from django.urls import path
+from django import forms
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
+
+class ProductForm(forms.ModelForm):
+    description = forms.CharField(widget=CKEditorUploadingWidget)
+    class Meta:
+        model = Product
+        fields = '__all__'
+
+
+
+
 class MyProductAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'price', 'Product_status', 'category']
     search_fields = ['name', 'price']
     list_filter = ['id']
     list_editable = ['name']
-    # fields = ['Mã sản phẩm', 'Tên sản phẩm', 'giá tiền', 'trạng thái', 'danh mục']
+    readonly_fields = ['image_view']
+    form = ProductForm
+
+    def image_view(self, product):
+        if product:
+            return mark_safe(f'<img src="https://res.cloudinary.com/disqxvj3s/image/upload/v1745741170/hejm9ioscexstl40ok6b.jpg" width="200"/>')
 
     def Product_status(self, obj):
         return obj.get_status_display()
@@ -44,6 +61,8 @@ class MyAdminSite(admin.AdminSite):
         return TemplateResponse(request, 'admin/stats.html', {
             'stats' : stats
         })
+
+
 admin_site = MyAdminSite(name='eCommerce')
 
 # Register your models here.
