@@ -28,7 +28,7 @@ class MyProductAdmin(admin.ModelAdmin):
 
     def image_view(self, product):
         if product:
-            return mark_safe(f'<img src="https://res.cloudinary.com/disqxvj3s/image/upload/v1745741170/hejm9ioscexstl40ok6b.jpg" width="200"/>')
+            return mark_safe(f'<img src="{product.image.url}" width="200"/>')
 
     def Product_status(self, obj):
         return obj.get_status_display()
