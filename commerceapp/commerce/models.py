@@ -42,13 +42,13 @@ class BaseModel(models.Model):
         ordering = ['-id'] #sap xep giam theo id (cai nao moi thi len truoc nao cu thi o sau
 
 class Role(BaseModel):
-    role = models.CharField(max_length=50)
+    name = models.CharField(max_length=50)
 
     class Meta:
         ordering = ['id']
 
     def __str__(self):
-        return self.role
+        return self.name
 
 
 
@@ -128,7 +128,7 @@ class Review(BaseModel):
 
 class Comment(Review):
     content = models.TextField(max_length=255)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return self.content

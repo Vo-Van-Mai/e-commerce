@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from .models import Category, Product
+from .models import Category, Product, Comment
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -16,3 +16,17 @@ class ProductSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'quantity', 'status', 'image' , 'category_id']
+
+class CommentSerializer(ModelSerializer):
+    def to_representation(self, comment):
+        req = super().to_representation(comment)
+        req['user'] = {
+            'username': comment.user.username,
+            'avatar': comment.user.avatar
+        }
+        return req
+    class Meta:
+        model = Comment
+        fields = ["content", "user", "parent", "created_date", "updated_date"]
+
+

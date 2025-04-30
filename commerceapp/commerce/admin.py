@@ -41,10 +41,10 @@ class MyProductAdmin(admin.ModelAdmin):
         }
 
 class MyRoleAdmin(admin.ModelAdmin):
-    list_display = ['id', 'role']
-    search_fields = ['role']
+    list_display = ['id', 'name']
+    search_fields = ['name']
     list_filter = ['id']
-    list_editable = ['role']
+    list_editable = ['name']
 
     class Media:
         css = {
