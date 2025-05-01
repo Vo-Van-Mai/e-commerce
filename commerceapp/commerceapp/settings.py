@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+import oauth2_provider.contrib.rest_framework
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,7 +45,15 @@ INSTALLED_APPS = [
     'ckeditor_uploader',
     'rest_framework',
     'drf_yasg',
+    'oauth2_provider',
 ]
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': ['oauth2_provider.contrib.rest_framework.OAuth2Authentication']
+}
+CLIENT_ID = 'CnbEx1TQiKwLTnhnif4B7cz6wDHWpA7dYqaqGrSz'
+CLIENT_SECRET = 'EchIJ41rpHwzlrbYrnfBx0iarcoJIhz0zSFxYGR3AoKn6Xk5d0Art4ZYeT22RGQQUm9mql86nKH9NmJGE6Rr4xmjwFqmHhhTpOawqvCxifOZiHebX5vzP9OZVdN0zw4R'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

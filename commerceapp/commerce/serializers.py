@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from .models import Category, Product, Comment
+from .models import Category, Product, Comment, User, Role
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -29,4 +29,27 @@ class CommentSerializer(ModelSerializer):
         model = Comment
         fields = ["content", "user", "parent", "created_date", "updated_date"]
 
+class RoleSerializer(ModelSerializer):
+    class Meta:
+        model = Role
+        fields = ['id', 'name']
 
+
+
+class UserSerializer(ModelSerializer):
+    def create(self, validated_data):
+        u = User(**validated_data)
+        u.set_password(u.password)
+        u.save()
+
+        return u
+
+    class Meta:
+        role = RoleSerializer
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'username', 'password', 'gender' ,'phone', 'avatar', 'role']
+        extra_kwargs ={
+            'password' : {
+                "write_only": True
+            }
+        }

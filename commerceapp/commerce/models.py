@@ -30,7 +30,7 @@ class User(AbstractUser):
         null = True
     )
 
-    role = models.ManyToManyField('Role')
+    role = models.ForeignKey('Role', on_delete=models.SET_NULL, null=True)
 
 class BaseModel(models.Model):
     active = models.BooleanField(default=True)
