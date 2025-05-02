@@ -37,3 +37,13 @@ class IsAdmin(BasePermission):
 class IsSuperUser(BasePermission):
     def has_permission(self, request, view):
         return request.user and request.user.is_superuser
+
+
+class IsAdminOrStaff(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role and ( request.user.role.name=="admin" or request.user.role.name=="staff")
+
+
+class IsAdminOrSeller(BasePermission):
+    def has_permission(self, request, view):
+        return request.user.is_authenticated and request.user.role and ( request.user.role.name=="admin" or request.user.role.name=="seller")

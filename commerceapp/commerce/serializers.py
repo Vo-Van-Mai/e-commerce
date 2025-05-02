@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from .models import Category, Product, Comment, User, Role
+from .models import Category, Product, Comment, User, Role, Shop
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -57,4 +57,18 @@ class UserSerializer(ModelSerializer):
                            'required' : 'vui lòng upload avatar (ảnh đại diện) của bạn!!'
                        }
                    }
+        }
+
+
+class ShopSerializer(ModelSerializer):
+
+    class Meta:
+        model = Shop
+        fields = ['id', 'name', 'user', 'avatar']
+        extra_kwargs={
+            'avatar': {
+                'error_messages': {
+                    'required': 'vui lòng upload avatar (ảnh đại diện) của shop!!'
+                }
+            }
         }

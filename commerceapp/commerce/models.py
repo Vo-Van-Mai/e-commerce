@@ -67,7 +67,7 @@ class Product(BaseModel):
         AVAILABLE = "available", "Còn hàng"
         SOLD_OUT = "sold_out", "Hết hàng"
     name = models.CharField(max_length=100, verbose_name="Tên sản phẩm")
-    price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Giá")
+    price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Giá")
     description = RichTextField()
     image = CloudinaryField('image', blank=True, null=True)
     quantity = models.IntegerField(default=0)
@@ -85,7 +85,8 @@ class Shop(BaseModel):
     name = models.CharField(max_length=100)
     description = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shop")
-    products = models.ManyToManyField(Product, related_name='shops')
+    products = models.ManyToManyField(Product, related_name='shops', blank=True)
+    avatar = CloudinaryField('image', null=True)
 
     def __str__(self):
         return self.name
@@ -93,22 +94,26 @@ class Shop(BaseModel):
 class Order(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='orders')
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=0)
 
+    def __str__(self):
+        return self.user
 
 class OrderDetail(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_details')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_details')
     quantity = models.IntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=2)
+    price = models.DecimalField(max_digits=10, decimal_places=0)
 
+    def __str__(self):
+        return self.order
 
 class Payment(BaseModel):
     class PaymentMethod(models.IntegerChoices):
         Cash = 1, "Thanh toán tiền mặt"
         Online = 2, "Thanh toán online"
 
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    total_amount = models.DecimalField(max_digits=10, decimal_places=0)
 
     class PaymentStatus(models.TextChoices):
         PENDING = "pending", "Đang chờ"
