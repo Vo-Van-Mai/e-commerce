@@ -116,7 +116,16 @@ class Payment(BaseModel):
         FAILED = "failed", "Thanh toán thất bại"
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
-
+    payment_method= models.CharField(
+        max_length=15,
+        choices=PaymentMethod.choices,
+        default=PaymentMethod.Cash
+    )
+    payment_status = models.CharField(
+        max_length=15,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.PENDING
+    )
     class Meta:
         ordering = ['-created_date']
 
@@ -144,6 +153,10 @@ class Like(Review):
 class Conversation(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='conversations')
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'shop'], name='unique_user_shop_conversation')
+        ]
 
 class ChatMessage(BaseModel):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
