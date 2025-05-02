@@ -30,6 +30,8 @@ class User(AbstractUser):
         null = True
     )
 
+    is_verified_seller = models.BooleanField(default=False)
+
     role = models.ForeignKey('Role', on_delete=models.SET_NULL, null=True)
 
 class BaseModel(models.Model):

@@ -47,9 +47,14 @@ class UserSerializer(ModelSerializer):
     class Meta:
         role = RoleSerializer
         model = User
-        fields = ['first_name', 'last_name', 'email', 'username', 'password', 'gender' ,'phone', 'avatar', 'role']
+        fields = ['first_name', 'last_name', 'email', 'username', 'password', 'gender' ,'phone', 'avatar']
         extra_kwargs ={
             'password' : {
                 "write_only": True
-            }
+            },
+            'avatar': {
+                       'error_messages': {
+                           'required' : 'vui lòng upload avatar (ảnh đại diện) của bạn!!'
+                       }
+                   }
         }

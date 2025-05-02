@@ -8,6 +8,7 @@ from rest_framework import viewsets, permissions, generics, status, parsers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.serializers import ValidationError
 
 from .models import Category, Product, Comment, User, Role
 from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer
@@ -83,6 +84,52 @@ class UserViewSet(viewsets.ViewSet):
     serializer_class = UserSerializer
     parser_classes = [parsers.MultiPartParser]
 
+    def register_user(self, request, role_name, is_staff=False):
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            role = Role.objects.get(name=role_name)
+            user.role = role
+            user.is_staff= is_staff
+            user.save()
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    #Đăng kí người mua
+    @action(methods=['post'], detail=False, url_path='register-buyer' )
+    def register_buyer(self, request):
+        return self.register_user(request, role_name="buyer")
+
+    #Đăng kí người bán
+    @action(methods=['post'], detail=False, url_path='register-seller')
+    def register_seller(self, request):
+        return self.register_user(request, role_name="seller")
+
+    #đăng kí thêm tài khoảng cho nhân viên
+    @action(methods=['post'], detail=False, url_path='register-staff', permission_classes=[permission.IsAdmin])
+    def register_staff(self, request):
+        return self.register_user(request, role_name="staff", is_staff=True )
+
+    #Đăng kí tài khoản là admin của hệ thống
+    @action(methods=['post'], detail=False, url_path='register-admin', permission_classes=[permission.IsSuperUser])
+    def register_admin(self, request):
+        return self.register_user(request, role_name="admin", is_staff=True)
+
+    #Lấy danh sách người dùng là seller đang chờ duyệt
+    @action(methods=['get'], url_path='pending-seller', detail=False, permission_classes=[permission.IsStaff])
+    def get_pending_seller(self, request):
+        role = Role.objects.get(name='seller')
+        pending_user = User.objects.filter(is_verified_seller=False, role=role)
+        return Response(UserSerializer(pending_user, many=True).data, status=status.HTTP_200_OK)
+
+    @action(methods=['patch'], detail=True, url_path="vertify_seller", permission_classes=[permission.IsAdmin, permission.IsStaff])
+    def verify_seller(self, request, pk):
+        user = User.objects.get(id=pk)
+        user.is_verified_seller=True
+        user.save()
+        return Response({"Message": "Cập nhật thành công!"}, status=status.HTTP_200_OK)
+
+    # Lấy người dùng hiện tại
     @action(methods=['get'], url_path='current-user', detail=False, permission_classes=[permissions.IsAuthenticated])
     def get_current_user(self, request):
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
