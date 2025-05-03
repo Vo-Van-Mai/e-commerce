@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from .models import Category, Product, Comment, User, Role, Shop
+from .models import Category, Product, Comment, User, Role, Shop, ShopProduct
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -15,7 +15,7 @@ class ProductSerializer(ModelSerializer):
         return data
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'quantity', 'status', 'image' , 'category_id']
+        fields = ['id', 'name', 'image' , 'category_id']
 
 class CommentSerializer(ModelSerializer):
     def to_representation(self, comment):
@@ -72,3 +72,13 @@ class ShopSerializer(ModelSerializer):
                 }
             }
         }
+
+class ShopProductSerializer(ModelSerializer):
+    product = ProductSerializer()
+
+    class Meta:
+        model = ShopProduct
+        fields= '__all__'
+
+
+    # def create(self, validated_data):

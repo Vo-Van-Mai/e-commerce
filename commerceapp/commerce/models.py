@@ -63,33 +63,42 @@ class Category(BaseModel):
 
 
 class Product(BaseModel):
-    class ProductStatus(models.TextChoices):
-        AVAILABLE = "available", "Còn hàng"
-        SOLD_OUT = "sold_out", "Hết hàng"
     name = models.CharField(max_length=100, verbose_name="Tên sản phẩm")
-    price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Giá")
     description = RichTextField()
     image = CloudinaryField('image', blank=True, null=True)
-    quantity = models.IntegerField(default=0)
-    status = models.CharField(
-        max_length=20,
-        choices = ProductStatus.choices, # gan gia tri trong enum cho status
-        default= ProductStatus.AVAILABLE # gia tri mac dinh khi them san pham
-    )
     category = models.ForeignKey(Category,on_delete=models.PROTECT, related_name='products')
 
     def __str__(self):
         return self.name
 
+
 class Shop(BaseModel):
     name = models.CharField(max_length=100)
     description = models.TextField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="shop")
-    products = models.ManyToManyField(Product, related_name='shops', blank=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="shop")
+    products = models.ManyToManyField(Product, related_name='shops', blank=True, through='ShopProduct')
     avatar = CloudinaryField('image', null=True)
-
     def __str__(self):
         return self.name
+
+
+class ShopProduct(BaseModel):
+    shop = models.ForeignKey(Shop, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Giá")
+    quantity = models.IntegerField(default=0)
+    class ProductStatus(models.TextChoices):
+        AVAILABLE = "available", "Còn hàng"
+        SOLD_OUT = "sold_out", "Hết hàng"
+    status = models.CharField(
+        max_length=20,
+        choices=ProductStatus.choices,  # gan gia tri trong enum cho status
+        default=ProductStatus.AVAILABLE  # gia tri mac dinh khi them san pham
+    )
+
+    def __str__(self):
+        return str(self.shop)
+
 
 class Order(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')

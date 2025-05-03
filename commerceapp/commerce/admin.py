@@ -3,7 +3,7 @@ from collections import Counter
 from django.db.models import Count
 from django.utils.html import mark_safe
 from django.contrib import admin
-from .models import Product, User, Role, Category, Shop, Order, OrderDetail, Payment, Comment, Like, ChatMessage, Conversation
+from .models import Product, User, Role, Category, Shop, Order, OrderDetail, Payment, Comment, Like, ChatMessage, Conversation, ShopProduct
 from django.template.response import TemplateResponse
 from django.urls import path
 from django import forms
@@ -19,8 +19,8 @@ class ProductForm(forms.ModelForm):
 
 
 class MyProductAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'price', 'Product_status', 'category']
-    search_fields = ['name', 'price']
+    list_display = ['id', 'name', 'category']
+    search_fields = ['name']
     list_filter = ['id']
     list_editable = ['name']
     readonly_fields = ['image_view']
@@ -29,11 +29,6 @@ class MyProductAdmin(admin.ModelAdmin):
     def image_view(self, product):
         if product:
             return mark_safe(f'<img src="{product.image.url}" width="200"/>')
-
-    def Product_status(self, obj):
-        return obj.get_status_display()
-
-    Product_status.short_description = 'Trạng thái sản phẩm'
 
     class Media:
         css = {
@@ -78,3 +73,4 @@ admin_site.register(Comment)
 admin_site.register(Like)
 admin_site.register(Conversation)
 admin_site.register(ChatMessage)
+admin_site.register(ShopProduct)

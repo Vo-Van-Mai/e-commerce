@@ -1,5 +1,6 @@
 from gc import get_objects
 from pickle import FALSE
+from urllib.request import Request
 # from tarfile import TruncatedHeaderError
 from xmlrpc.client import ResponseError
 
@@ -11,9 +12,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.exceptions import PermissionDenied
 
 from rest_framework.serializers import ValidationError
+from unicodedata import category
 
-from .models import Category, Product, Comment, User, Role, Shop
-from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer, ShopSerializer
+from .models import Category, Product, Comment, User, Role, Shop, ShopProduct
+from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer, ShopSerializer, ShopProductSerializer
 from . import serializers, paginator
 from . import permission
 
@@ -63,10 +65,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         cate_id = self.request.query_params.get('cate_ID')
         if cate_id:
             query = query.filter(category_id = cate_id)
-        # tim san pham theo gia
-        price = self.request.query_params.get('price')
-        if price:
-            query = query.filter(price=price)
+
         return query
 
 
@@ -131,29 +130,29 @@ class UserViewSet(viewsets.ViewSet):
 
 
     #Lấy danh sách người dùng là seller đang chờ duyệt
-    @action(methods=['get'], url_path='pending-seller', detail=False, permission_classes=[permission.IsStaff])
+    @action(methods=['get'], url_path='pending-seller', detail=False, permission_classes=[permission.IsAdminOrStaff])
     def get_pending_seller(self, request):
         role = Role.objects.get(name='seller')
         pending_user = User.objects.filter(is_verified_seller=False, role=role)
         return Response(UserSerializer(pending_user, many=True).data, status=status.HTTP_200_OK)
 
     # Duyệt / hủy quyền người bán
-    @action(methods=['patch'], detail=True, url_path="verify_seller",
-            permission_classes=[permission.IsAdmin, permission.IsStaff])
+    @action(methods=['patch'], detail=True, url_path="verify-seller",
+            permission_classes=[permission.IsAdminOrStaff])
     def verify_seller(self, request, pk):
         try:
-            user = self.get_object()  # Lấy user từ pk
+            user = User.objects.get(pk=pk)  # Lấy user từ pk
             user.is_verified_seller = True
             user.save()
             return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
         except:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(methods=['patch'], detail=True, url_path="cancel_seller",
-            permission_classes=[permission.IsAdmin, permission.IsStaff])
+    @action(methods=['patch'], detail=True, url_path="cancel-seller",
+            permission_classes=[permission.IsAdminOrStaff])
     def cancel_seller(self, request, pk):
         try:
-            user = self.get_object()
+            user = User.objects.get(pk=pk)
             user.is_verified_seller = False
             user.save()
             return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
@@ -189,5 +188,23 @@ class ShopViewSet(viewsets.ModelViewSet):
         if self.request.user != instance.user and not self.request.user.is_superuser:
             raise PermissionDenied("Bạn không có quyền xóa shop này!")
         instance.delete()
+
+    @action(methods=['post'], detail=False, url_path='add-product')
+    def add_product(self, request):
+        product = Product.object.create(name=request.data.name,
+                                        description=request.data.description,
+                                        image=request.data.ìmage,
+                                        category=request.data.category)
+
+
+
+
+# class ShopProductViewSet(viewsets.ViewSet, generics.ListAPIView):
+#     queryset = ShopProduct.objects.filter(active=True)
+#     serializer_class = ShopProductSerializer
+#     permission_classes = [permission.IsSeller]
+
+
+
 
 

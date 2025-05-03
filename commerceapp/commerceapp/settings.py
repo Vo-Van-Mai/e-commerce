@@ -52,8 +52,8 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['oauth2_provider.contrib.rest_framework.OAuth2Authentication']
 }
-CLIENT_ID = 'CnbEx1TQiKwLTnhnif4B7cz6wDHWpA7dYqaqGrSz'
-CLIENT_SECRET = 'EchIJ41rpHwzlrbYrnfBx0iarcoJIhz0zSFxYGR3AoKn6Xk5d0Art4ZYeT22RGQQUm9mql86nKH9NmJGE6Rr4xmjwFqmHhhTpOawqvCxifOZiHebX5vzP9OZVdN0zw4R'
+CLIENT_ID = '3cCkoZtN9HGhiNFcgqNefaLYkdYP8e4O8dEVz2Om'
+CLIENT_SECRET = 'OqrtHZXA5IOl10lIB8m8DXaAnnXuR1D106knZdQwy1bYSNeupyxWGPjueFZaFH3OIiYozLVHJm3yUaxlZaiPTjfOqv337BTROZjzbsZZjSUibaenQCoIN762tsYpcMfu'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
