@@ -165,6 +165,8 @@ class UserViewSet(viewsets.ViewSet):
     def get_current_user(self, request):
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
+    def perform_create(self, serializer):
+        serializer.save(create_by=self.request.user)
 
 class ShopViewSet(viewsets.ModelViewSet):
     queryset = Shop.objects.filter(active=True)
@@ -189,20 +191,54 @@ class ShopViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("Bạn không có quyền xóa shop này!")
         instance.delete()
 
-    @action(methods=['post'], detail=False, url_path='add-product')
-    def add_product(self, request):
-        product = Product.object.create(name=request.data.name,
-                                        description=request.data.description,
-                                        image=request.data.ìmage,
-                                        category=request.data.category)
 
+class ShopProductViewSet(viewsets.ViewSet, generics.ListAPIView):
+    queryset = ShopProduct.objects.filter(active=True)
+    serializer_class = ShopProductSerializer
+    permission_classes = [permission.IsSeller]
 
+    def get_queryset(self):
+        # Chỉ lấy sản phẩm thuộc shop của người dùng hiện tại
+        user = self.request.user
+        if hasattr(user, 'shop'):
+            return self.queryset.filter(shop=user.shop)
+        return ShopProduct.objects.none()
 
+    def perform_create(self, serializer):
+        serializer.save(shop=self.request.user.shop)
 
-# class ShopProductViewSet(viewsets.ViewSet, generics.ListAPIView):
-#     queryset = ShopProduct.objects.filter(active=True)
-#     serializer_class = ShopProductSerializer
-#     permission_classes = [permission.IsSeller]
+    @action(detail=False, methods=["post"], url_path="add-product", permission_classes=[permission.IsSeller])
+    def add_product_to_shop(self, request):
+        product_id = request.data.get("product_id")
+        price = request.data.get("price")
+        quantity = request.data.get("quantity", 0)
+        status_value = request.data.get("status", "available")
+
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found."}, status=404)
+
+        # Kiểm tra người dùng có phải là người tạo sản phẩm không
+        if product.owner != request.user:
+            return Response({"error": "You can only add your own products to your shop."}, status=403)
+
+        try:
+            shop = request.user.shop
+        except Shop.DoesNotExist:
+            return Response({"error": "User has no shop."}, status=400)
+
+        # Tạo ShopProduct
+        shop_product = ShopProduct.objects.create(
+            shop=shop,
+            product=product,
+            price=price,
+            quantity=quantity,
+            status=status_value
+        )
+
+        serializer = ShopProductSerializer(shop_product)
+        return Response(serializer.data, status=201)
 
 
 

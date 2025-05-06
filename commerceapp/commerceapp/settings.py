@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+import corsheaders.middleware
 import oauth2_provider.contrib.rest_framework
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'drf_yasg',
     'oauth2_provider',
+    'corsheaders',
 ]
 
 
@@ -56,6 +58,7 @@ CLIENT_ID = '3cCkoZtN9HGhiNFcgqNefaLYkdYP8e4O8dEVz2Om'
 CLIENT_SECRET = 'OqrtHZXA5IOl10lIB8m8DXaAnnXuR1D106knZdQwy1bYSNeupyxWGPjueFZaFH3OIiYozLVHJm3yUaxlZaiPTjfOqv337BTROZjzbsZZjSUibaenQCoIN762tsYpcMfu'
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,6 +84,8 @@ TEMPLATES = [
         },
     },
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 WSGI_APPLICATION = 'commerceapp.wsgi.application'
 
