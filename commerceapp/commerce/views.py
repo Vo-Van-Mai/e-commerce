@@ -166,7 +166,7 @@ class UserViewSet(viewsets.ViewSet):
         return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
-        serializer.save(create_by=self.request.user)
+        serializer.save(created_by=self.request.user)
 
 class ShopViewSet(viewsets.ModelViewSet):
     queryset = Shop.objects.filter(active=True)

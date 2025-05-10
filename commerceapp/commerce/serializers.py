@@ -7,6 +7,45 @@ class CategorySerializer(ModelSerializer):
         model = Category
         fields = ['id', 'name', 'description', 'created_date']
 
+
+class ShopProductSerializer(ModelSerializer):
+
+    class ShopProductSerializer(serializers.ModelSerializer):
+        product_name = serializers.CharField(write_only=True)
+        category_id = serializers.IntegerField(write_only=True)
+
+        class Meta:
+            model = ShopProduct
+            fields = ['id', 'shop', 'product_name', 'category_id', 'price', 'quantity', 'status']
+            extra_kwargs = {
+                'status': {'required': False}
+            }
+
+        def create(self, validated_data):
+            product_name = validated_data.pop('product_name')
+            category_id = validated_data.pop('category_id')
+
+            # Lấy category từ hệ thống
+            try:
+                category = Category.objects.get(pk=category_id)
+            except Category.DoesNotExist:
+                raise serializers.ValidationError({'category_id': 'Không tồn tại danh mục này'})
+
+            # Lấy user đang login
+            user = self.context['request'].user
+
+            # Tạo sản phẩm mới
+            product = Product.objects.create(
+                name=product_name,
+                description="Tạo tự động từ ShopProduct",
+                category=category,
+                created_by=user
+            )
+
+            validated_data['product'] = product
+            return super().create(validated_data)
+
+
 class ProductSerializer(ModelSerializer):
 
     #ghi de lai de can thiep du lieu dau ra
@@ -16,8 +55,7 @@ class ProductSerializer(ModelSerializer):
         return data
     class Meta:
         model = Product
-        fields = ['id', 'name', 'image' , 'category', 'create_by']
-
+        fields = ['id', 'name', 'image' , 'category', 'created_by']
 
 
 class CommentSerializer(ModelSerializer):
@@ -36,7 +74,6 @@ class RoleSerializer(ModelSerializer):
     class Meta:
         model = Role
         fields = ['id', 'name']
-
 
 
 class UserSerializer(ModelSerializer):
@@ -69,6 +106,7 @@ class ShopSerializer(ModelSerializer):
         model = Shop
         fields = ['id', 'name', 'user', 'avatar']
         extra_kwargs={
+            'user': {'read_only': True},
             'avatar': {
                 'error_messages': {
                     'required': 'vui lòng upload avatar (ảnh đại diện) của shop!!'
@@ -76,8 +114,4 @@ class ShopSerializer(ModelSerializer):
             }
         }
 
-class ShopProductSerializer(ModelSerializer):
-    product_name = serializers.CharField(source='product.name', read_only=True)
-    class Meta:
-        model = ShopProduct
-        fields= ['id', 'shop', 'product', 'price', 'quantity', 'product_name', 'status']
+

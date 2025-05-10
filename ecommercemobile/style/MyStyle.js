@@ -2,7 +2,8 @@ import { StyleSheet } from "react-native";
 
 export default StyleSheet.create({
     container: {
-        flex: 1
+        flex: 1,
+        marginTop: 60
     }, subject: {
         fontSize: 30,
         fontWeight: 'bold',
@@ -25,5 +26,9 @@ export default StyleSheet.create({
         paddingHorizontal: 10,
         backgroundColor: 'red   ',
         color: "black"
+    },text: {
+        color: "blue",
+        fontSize: 26,
+        fontWeight: "bold"
     }
 }); 

@@ -54,8 +54,8 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['oauth2_provider.contrib.rest_framework.OAuth2Authentication']
 }
-CLIENT_ID = '3cCkoZtN9HGhiNFcgqNefaLYkdYP8e4O8dEVz2Om'
-CLIENT_SECRET = 'OqrtHZXA5IOl10lIB8m8DXaAnnXuR1D106knZdQwy1bYSNeupyxWGPjueFZaFH3OIiYozLVHJm3yUaxlZaiPTjfOqv337BTROZjzbsZZjSUibaenQCoIN762tsYpcMfu'
+CLIENT_ID = 'rcZ42IEvXLP3Vwp9k9eBdp64xzCDIfVdVtYe5nZB'
+CLIENT_SECRET = '1jMGrQbHXC9dFfUiVEmgwXqluywGoQXg3503zzt4RMBkW4D4ExbgTW1AsgliujvyCv2xyzYNvQJvuqBG6SqmPl6EMtdtEZST5pmJtqHwlIvvIzftMVAjVwKYk8a2lrY2'
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
