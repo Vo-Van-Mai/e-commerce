@@ -56,6 +56,10 @@ REST_FRAMEWORK = {
 }
 CLIENT_ID = 'rcZ42IEvXLP3Vwp9k9eBdp64xzCDIfVdVtYe5nZB'
 CLIENT_SECRET = '1jMGrQbHXC9dFfUiVEmgwXqluywGoQXg3503zzt4RMBkW4D4ExbgTW1AsgliujvyCv2xyzYNvQJvuqBG6SqmPl6EMtdtEZST5pmJtqHwlIvvIzftMVAjVwKYk8a2lrY2'
+OAUTH2_PROVIDER = {
+    'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
+}
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',

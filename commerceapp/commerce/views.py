@@ -24,7 +24,7 @@ def index(request):
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.filter(active=True)
-    serializer_class = serializers.CategorySerializer
+    serializer_class = CategorySerializer
 
     def get_permissions(self):
         if self.action in ["create", "update", "destroy", "update", "partial_update"]:
@@ -62,11 +62,13 @@ class ProductViewSet(viewsets.ModelViewSet):
             query = query.filter(name__icontains=q)
 
         #tim san pham theo danh muc
-        cate_id = self.request.query_params.get('cate_ID')
+        cate_id = self.request.query_params.get('cate_id')
         if cate_id:
             query = query.filter(category_id = cate_id)
-
         return query
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
 
 
     @action(methods=['get', 'post'], url_path="comment", detail=True)
@@ -161,9 +163,19 @@ class UserViewSet(viewsets.ViewSet):
 
 
     # Lấy người dùng hiện tại
-    @action(methods=['get'], url_path='current-user', detail=False, permission_classes=[permissions.IsAuthenticated])
+    @action(methods=['get', 'patch'], url_path='current-user', detail=False, permission_classes=[permissions.IsAuthenticated])
     def get_current_user(self, request):
-        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+        if request.method.__eq__("PATCH"):
+            u = request.user
+            for key in request.data:
+                if key in ['first_name', 'last_name', 'avatar', 'phone']:
+                    setattr(u, key, request.data[key])
+                elif key.__eq__('password'):
+                    u.set_password(request.data[key])
+            u.save()
+            return Response(UserSerializer(u).data)
+        else:
+            return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
@@ -192,53 +204,29 @@ class ShopViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 
-class ShopProductViewSet(viewsets.ViewSet, generics.ListAPIView):
+class ShopProductViewSet(viewsets.ModelViewSet):
     queryset = ShopProduct.objects.filter(active=True)
     serializer_class = ShopProductSerializer
     permission_classes = [permission.IsSeller]
 
     def get_queryset(self):
-        # Chỉ lấy sản phẩm thuộc shop của người dùng hiện tại
+
+        #Chỉ trả về ShopProduct thuộc về shop của người bán hiện tại.
         user = self.request.user
-        if hasattr(user, 'shop'):
-            return self.queryset.filter(shop=user.shop)
-        return ShopProduct.objects.none()
+        shop = getattr(user, 'shop', None)
+        if not shop:
+            return ShopProduct.objects.none()
+        return ShopProduct.objects.filter(shop=shop, active=True)
 
     def perform_create(self, serializer):
-        serializer.save(shop=self.request.user.shop)
+        #Gán shop tự động từ user và gọi serializer.save().
+        user = self.request.user
+        shop = getattr(user, 'shop', None)
 
-    @action(detail=False, methods=["post"], url_path="add-product", permission_classes=[permission.IsSeller])
-    def add_product_to_shop(self, request):
-        product_id = request.data.get("product_id")
-        price = request.data.get("price")
-        quantity = request.data.get("quantity", 0)
-        status_value = request.data.get("status", "available")
+        if not shop:
+            raise ValidationError("Người dùng chưa có shop để tạo sản phẩm.")
+        serializer.save(shop=shop)
 
-        try:
-            product = Product.objects.get(id=product_id)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found."}, status=404)
-
-        # Kiểm tra người dùng có phải là người tạo sản phẩm không
-        if product.owner != request.user:
-            return Response({"error": "You can only add your own products to your shop."}, status=403)
-
-        try:
-            shop = request.user.shop
-        except Shop.DoesNotExist:
-            return Response({"error": "User has no shop."}, status=400)
-
-        # Tạo ShopProduct
-        shop_product = ShopProduct.objects.create(
-            shop=shop,
-            product=product,
-            price=price,
-            quantity=quantity,
-            status=status_value
-        )
-
-        serializer = ShopProductSerializer(shop_product)
-        return Response(serializer.data, status=201)
 
 
 

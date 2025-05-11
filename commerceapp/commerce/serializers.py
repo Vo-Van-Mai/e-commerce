@@ -1,3 +1,5 @@
+from itertools import product
+
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from .models import Category, Product, Comment, User, Role, Shop, ShopProduct
@@ -6,44 +8,6 @@ class CategorySerializer(ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'description', 'created_date']
-
-
-class ShopProductSerializer(ModelSerializer):
-
-    class ShopProductSerializer(serializers.ModelSerializer):
-        product_name = serializers.CharField(write_only=True)
-        category_id = serializers.IntegerField(write_only=True)
-
-        class Meta:
-            model = ShopProduct
-            fields = ['id', 'shop', 'product_name', 'category_id', 'price', 'quantity', 'status']
-            extra_kwargs = {
-                'status': {'required': False}
-            }
-
-        def create(self, validated_data):
-            product_name = validated_data.pop('product_name')
-            category_id = validated_data.pop('category_id')
-
-            # Lấy category từ hệ thống
-            try:
-                category = Category.objects.get(pk=category_id)
-            except Category.DoesNotExist:
-                raise serializers.ValidationError({'category_id': 'Không tồn tại danh mục này'})
-
-            # Lấy user đang login
-            user = self.context['request'].user
-
-            # Tạo sản phẩm mới
-            product = Product.objects.create(
-                name=product_name,
-                description="Tạo tự động từ ShopProduct",
-                category=category,
-                created_by=user
-            )
-
-            validated_data['product'] = product
-            return super().create(validated_data)
 
 
 class ProductSerializer(ModelSerializer):
@@ -63,7 +27,7 @@ class CommentSerializer(ModelSerializer):
         req = super().to_representation(comment)
         req['user'] = {
             'username': comment.user.username,
-            'avatar': comment.user.avatar
+            'avatar': comment.user.avatar.url if comment.user.avatar else None
         }
         return req
     class Meta:
@@ -114,4 +78,21 @@ class ShopSerializer(ModelSerializer):
             }
         }
 
+
+
+class ShopProductSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
+    class Meta:
+        model = ShopProduct
+        fields = ['id', 'shop', 'product', 'price', 'quantity', 'status']
+        extra_kwargs = {
+            'shop': {'read_only': True}
+        }
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user if request else None
+        product_data = validated_data.pop('product')
+        product = Product.objects.create(created_by=user,**product_data)
+        shopproduct = ShopProduct.objects.create(product=product, **validated_data)
+        return shopproduct
 
