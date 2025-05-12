@@ -8,6 +8,8 @@ r.register('products', views.ProductViewSet, basename='products')
 r.register('users', views.UserViewSet, basename='users')
 r.register('shops', views.ShopViewSet, basename='shops')
 r.register('shop-products', views.ShopProductViewSet, basename='shopproduct')
+r.register('comments', views.CommentViewSet, basename='comments')
+r.register('likes', views.likeViewSet, basename='likes')
 urlpatterns = [
     path('', include(r.urls))
 ]

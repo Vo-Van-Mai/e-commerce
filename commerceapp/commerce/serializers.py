@@ -2,7 +2,7 @@ from itertools import product
 
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from .models import Category, Product, Comment, User, Role, Shop, ShopProduct
+from .models import Category, Product, Comment, User, Role, Shop, ShopProduct, Like
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -11,7 +11,6 @@ class CategorySerializer(ModelSerializer):
 
 
 class ProductSerializer(ModelSerializer):
-
     #ghi de lai de can thiep du lieu dau ra
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -95,4 +94,11 @@ class ShopProductSerializer(serializers.ModelSerializer):
         product = Product.objects.create(created_by=user,**product_data)
         shopproduct = ShopProduct.objects.create(product=product, **validated_data)
         return shopproduct
+
+class LikeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Like
+        fields = ['id', 'star']
+
+
 
