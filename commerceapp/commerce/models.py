@@ -1,5 +1,4 @@
-from tkinter.constants import CASCADE
-from venv import create
+
 
 import cloudinary
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -109,7 +108,7 @@ class Order(BaseModel):
     total_price = models.DecimalField(max_digits=10, decimal_places=0)
 
     def __str__(self):
-        return self.user
+        return f"Order #{self.id} by {self.user.username}"
 
 class OrderDetail(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_details')
@@ -118,7 +117,7 @@ class OrderDetail(BaseModel):
     price = models.DecimalField(max_digits=10, decimal_places=0)
 
     def __str__(self):
-        return self.order
+        return f"{self.product.name} x{self.quantity} for Order #{self.order.id}"
 
 class Payment(BaseModel):
     class PaymentMethod(models.IntegerChoices):
@@ -133,8 +132,7 @@ class Payment(BaseModel):
         FAILED = "failed", "Thanh toán thất bại"
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
-    payment_method= models.CharField(
-        max_length=15,
+    payment_method = models.IntegerField(
         choices=PaymentMethod.choices,
         default=PaymentMethod.Cash
     )
