@@ -183,3 +183,15 @@ class ChatMessage(BaseModel):
     def __str__(self):
         return f"{self.message[:30]}..."
 
+class Cart(BaseModel):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+
+class CartItem(BaseModel):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField(default=1)
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['cart', 'product'], name='unique_cart_product')
+        ]
+

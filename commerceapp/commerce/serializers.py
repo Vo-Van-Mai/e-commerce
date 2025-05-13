@@ -87,6 +87,13 @@ class ShopProductSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'shop': {'read_only': True}
         }
+
+    def validate(self, data):
+        if data['price'] < 0:
+            raise serializers.ValidationError('Giá sản phẩm phải lớn hơn 0!')
+        return data
+
+
     def create(self, validated_data):
         request = self.context.get('request')
         user = request.user if request else None
