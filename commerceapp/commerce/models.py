@@ -1,3 +1,4 @@
+from datetime import timezone
 from tkinter.constants import CASCADE
 from venv import create
 
@@ -121,28 +122,107 @@ class OrderDetail(BaseModel):
         return self.order
 
 class Payment(BaseModel):
-    class PaymentMethod(models.IntegerChoices):
-        Cash = 1, "Thanh toán tiền mặt"
-        Online = 2, "Thanh toán online"
+    class Payment(models.Model):
+        PAYMENT_METHOD_CHOICES = [
+            ('COD', 'Cash On Delivery'),
+            ('PAYPAL', 'PayPal'),
+            ('STRIPE', 'Stripe'),
+            ('MOMO', 'MoMo'),
+            ('ZALOPAY', 'ZaloPay'),
+        ]
 
-    total_amount = models.DecimalField(max_digits=10, decimal_places=0)
+        STATUS_CHOICES = [
+            ('PENDING', 'Pending'),
+            ('COMPLETED', 'Completed'),
+            ('FAILED', 'Failed'),
+            ('REFUNDED', 'Refunded'),
+        ]
 
-    class PaymentStatus(models.TextChoices):
-        PENDING = "pending", "Đang chờ"
-        COMPLETED = "completed", "Đã thanh toán"
-        FAILED = "failed", "Thanh toán thất bại"
+        order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='payments')
+        amount = models.DecimalField(max_digits=10, decimal_places=2)
+        payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
+        status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+        transaction_id = models.CharField(max_length=255, blank=True, null=True)
+        payment_date = models.DateTimeField(blank=True, null=True)
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
 
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
-    payment_method= models.CharField(
-        max_length=15,
-        choices=PaymentMethod.choices,
-        default=PaymentMethod.Cash
-    )
-    payment_status = models.CharField(
-        max_length=15,
-        choices=PaymentStatus.choices,
-        default=PaymentStatus.PENDING
-    )
+        # Additional fields for payment gateway specific data
+        gateway_response = models.JSONField(blank=True, null=True)  # Stores any response from payment gateway
+
+        def __str__(self):
+            return f"Payment #{self.id} - {self.get_status_display()} via {self.get_payment_method_display()}"
+
+        def mark_as_completed(self):
+            """Mark payment as completed and update related order"""
+            self.status = 'COMPLETED'
+            self.payment_date = timezone.now()
+            self.save()
+
+            # Update order status to processing
+            order = self.order
+            order.status = 'PROCESSING'
+            order.save()
+
+        def mark_as_failed(self):
+            """Mark payment as failed"""
+            self.status = 'FAILED'
+            self.save()
+
+    # class PaymentMethod(models.IntegerChoices):
+    #     Cash = 1, "Thanh toán tiền mặt"
+    #     Online = 2, "Thanh toán online"
+    #
+    #     payment_method_choices = [
+    #         ('COD', 'Cash On Delivery'),
+    #         ('PAYPAL', 'PayPal'),
+    #         ('STRIPE', 'Stripe'),
+    #         ('MOMO', 'MoMo'),
+    #         ('ZALOPAY', 'ZaloPay'),
+    #     ]
+    #     name = models.CharField(max_length=20, choices=payment_method_choices)
+    #     description = models.TextField(blank=True, null=True)
+    #     is_active = models.BooleanField(default=True)
+    #     icon = models.ImageField(upload_to='payment_icons/', blank=True, null=True)
+    #
+    #     def __str__(self):
+    #         return self.get_name_display()
+    #
+    # total_amount = models.DecimalField(max_digits=10, decimal_places=0)
+    #
+    # class PaymentStatus(models.TextChoices):
+    #     status_choices = [
+    #         ('pending', 'Chờ thanh toán'),
+    #         ('completed', 'Thanh toán thành công'),
+    #         ('failed', 'Thanh toán thất bại'),
+    #         ('refunded', 'Hoàn tiền'),
+    #     ]
+    #
+    # order = models.ForeignKey('commerce_order.Order', on_delete=models.CASCADE,
+    #                           related_name='payments')  # Match your actual app and model name
+    # amount = models.DecimalField(max_digits=10, decimal_places=2)
+    # payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT)
+    # status = models.CharField(max_length=10, choices=status_choices, default='PENDING')
+    # transaction_id = models.CharField(max_length=255, blank=True, null=True)
+    # payment_data = models.JSONField(blank=True, null=True)  # Store response data from payment gateways
+    # created_at = models.DateTimeField(auto_now_add=True)
+    # updated_at = models.DateTimeField(auto_now=True)
+    #
+    # order = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
+    # payment_method= models.CharField(
+    #     max_length=15,
+    #     choices=PaymentMethod.choices,
+    #     default=PaymentMethod.Cash
+    # )
+    # payment_status = models.CharField(
+    #     max_length=15,
+    #     choices=PaymentStatus.choices,
+    #     default=PaymentStatus.PENDING
+    # )
+    #
+    # def __str__(self):
+    #     return f"Payment #{self.id} - {self.get_status_display()}"
+
     class Meta:
         ordering = ['-created_date']
 
