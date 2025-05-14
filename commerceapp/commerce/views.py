@@ -15,7 +15,7 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.serializers import ValidationError
 from unicodedata import category
 
-from .models import Category, Product, Comment, User, Role, Shop, ShopProduct, Like
+from .models import Category, Product, Comment, User, Shop, ShopProduct, Like
 from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer, ShopSerializer, \
     ShopProductSerializer, LikeSerializer
 from . import serializers, paginator
@@ -156,8 +156,7 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            role = Role.objects.get(name=role_name)
-            user.role = role
+            user.role = role_name
             user.is_staff= is_staff
             user.save()
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
@@ -191,7 +190,7 @@ class UserViewSet(viewsets.ViewSet):
     #Lấy danh sách người dùng là seller đang chờ duyệt
     @action(methods=['get'], url_path='pending-seller', detail=False, permission_classes=[permission.IsAdminOrStaff])
     def get_pending_seller(self, request):
-        role = Role.objects.get(name='seller')
+        role = 'seller'
         pending_user = User.objects.filter(is_verified_seller=False, role=role)
         return Response(UserSerializer(pending_user, many=True).data, status=status.HTTP_200_OK)
 

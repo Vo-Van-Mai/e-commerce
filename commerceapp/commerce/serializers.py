@@ -2,7 +2,7 @@ from itertools import product
 
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from .models import Category, Product, Comment, User, Role, Shop, ShopProduct, Like
+from .models import Category, Product, Comment, User, Shop, ShopProduct, Like, Cart, CartItem
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -33,11 +33,6 @@ class CommentSerializer(ModelSerializer):
         model = Comment
         fields = ["content", "user", "parent", "created_date", "updated_date"]
 
-class RoleSerializer(ModelSerializer):
-    class Meta:
-        model = Role
-        fields = ['id', 'name']
-
 
 class UserSerializer(ModelSerializer):
     def create(self, validated_data):
@@ -48,9 +43,8 @@ class UserSerializer(ModelSerializer):
         return u
 
     class Meta:
-        role = RoleSerializer
         model = User
-        fields = ['first_name', 'last_name', 'email', 'username', 'password', 'gender' ,'phone', 'avatar']
+        fields = ['first_name', 'last_name', 'email', 'username', 'password', 'gender' ,'phone', 'avatar', 'role']
         extra_kwargs ={
             'password' : {
                 "write_only": True
@@ -79,7 +73,7 @@ class ShopSerializer(ModelSerializer):
 
 
 
-class ShopProductSerializer(serializers.ModelSerializer):
+class ShopProductSerializer(ModelSerializer):
     product = ProductSerializer()
     class Meta:
         model = ShopProduct
@@ -102,10 +96,14 @@ class ShopProductSerializer(serializers.ModelSerializer):
         shopproduct = ShopProduct.objects.create(product=product, **validated_data)
         return shopproduct
 
-class LikeSerializer(serializers.ModelSerializer):
+class LikeSerializer(ModelSerializer):
     class Meta:
         model = Like
         fields = ['id', 'star']
 
 
+class CartSerializer(ModelSerializer):
+    class Meta:
+        model = Cart
+        fields = '__all__'
 

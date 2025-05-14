@@ -6,7 +6,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 from ckeditor.fields import RichTextField
-from unicodedata import category
 
 
 class User(AbstractUser):
@@ -31,27 +30,22 @@ class User(AbstractUser):
 
     is_verified_seller = models.BooleanField(default=False)
 
-    role = models.ForeignKey('Role', on_delete=models.SET_NULL, null=True)
+    class RoleType(models.TextChoices):
+        ADMIN = 'admin', 'Admin'
+        STAFF = 'staff', 'Nhân viên'
+        SELLER = 'seller', 'Người bán'
+        BUYER = 'buyer', 'Người mua'
+
+    role = models.CharField(choices=RoleType.choices, default=RoleType.BUYER, max_length=20)
 
 class BaseModel(models.Model):
     active = models.BooleanField(default=True)
-    created_date = models.DateField(auto_now_add=True)
-    updated_date = models.DateField(auto_now=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     class Meta:
         abstract = True
         ordering = ['-id'] #sap xep giam theo id (cai nao moi thi len truoc nao cu thi o sau
-
-class Role(BaseModel):
-    name = models.CharField(max_length=50)
-
-    class Meta:
-        ordering = ['id']
-
-    def __str__(self):
-        return self.name
-
-
 
 class Category(BaseModel):
     name = models.CharField(max_length=100, unique=True)
@@ -66,7 +60,6 @@ class Product(BaseModel):
     description = RichTextField()
     image = CloudinaryField('image', blank=True, null=True)
     category = models.ForeignKey(Category,on_delete=models.PROTECT, related_name='products')
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='products', null=True)
     def __str__(self):
         return self.name
 
@@ -112,12 +105,12 @@ class Order(BaseModel):
 
 class OrderDetail(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_details')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='order_details')
+    shop_product = models.ForeignKey(ShopProduct, on_delete=models.CASCADE, related_name='order_details')
     quantity = models.IntegerField()
-    price = models.DecimalField(max_digits=10, decimal_places=0)
 
     def __str__(self):
-        return f"{self.product.name} x{self.quantity} for Order #{self.order.id}"
+        return f"{self.shop_product.product.name} x{self.quantity} for Order #{self.order.id}"
+
 
 class Payment(BaseModel):
     class PaymentMethod(models.IntegerChoices):
@@ -162,6 +155,10 @@ class Comment(Review):
 class Like(Review):
     star = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'product'], name='unique_user_product_like')
+        ]
     def __str__(self):
         return str(self.star)
 
@@ -184,14 +181,16 @@ class ChatMessage(BaseModel):
         return f"{self.message[:30]}..."
 
 class Cart(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    def __str__(self):
+        return f"Cart of {self.user.username}"
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    shop_product = models.ForeignKey(ShopProduct, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['cart', 'product'], name='unique_cart_product')
+            models.UniqueConstraint(fields=['cart', 'shop_product'], name='unique_cart_product')
         ]
 

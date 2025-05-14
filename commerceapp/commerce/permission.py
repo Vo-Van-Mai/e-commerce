@@ -1,37 +1,36 @@
-from rest_framework.permissions import BasePermission
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission, IsAuthenticated
+
 
 class IsSeller(BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated and
-            request.user.role and  # Kiểm tra sự tồn tại của role
-            request.user.role.name == "seller" and
-            request.user.is_verified_seller == True
+            request.user.role == 'seller' and
+            request.user.is_verified_seller
         )
+
 
 class IsBuyer(BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated and
-            request.user.role and  # Kiểm tra sự tồn tại của role
-            request.user.role.name == "buyer"
+            request.user.role == 'buyer'
         )
+
 
 class IsStaff(BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated and
-            request.user.role and  # Kiểm tra sự tồn tại của role
-            request.user.role.name == "staff"
+            request.user.role == 'staff'
         )
+
 
 class IsAdmin(BasePermission):
     def has_permission(self, request, view):
         return (
             request.user.is_authenticated and
-            request.user.role and  # Kiểm tra sự tồn tại của role
-            request.user.role.name == "admin"
+            request.user.role == 'admin'
         )
 
 
@@ -42,17 +41,25 @@ class IsSuperUser(BasePermission):
 
 class IsAdminOrStaff(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role and ( request.user.role.name=="admin" or request.user.role.name=="staff")
+        return (
+            request.user.is_authenticated and
+            request.user.role in ['admin', 'staff']
+        )
 
 
 class IsAdminOrSeller(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role and ( request.user.role.name=="admin" or request.user.role.name=="seller")
+        return (
+            request.user.is_authenticated and
+            request.user.role in ['admin', 'seller']
+        )
 
-class IsCommentOwner(permissions.IsAuthenticated):
+
+class IsCommentOwner(IsAuthenticated):
     def has_object_permission(self, request, view, comment):
         return super().has_permission(request, view) and request.user == comment.user
 
-class IsRatingOwner(permissions.IsAuthenticated):
+
+class IsRatingOwner(IsAuthenticated):
     def has_object_permission(self, request, view, like):
         return super().has_permission(request, view) and request.user == like.user
