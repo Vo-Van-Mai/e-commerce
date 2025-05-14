@@ -175,61 +175,6 @@ class Payment(BaseModel):
         self.status = 'FAILED'
         self.save()
 
-    # class PaymentMethod(models.IntegerChoices):
-    #     Cash = 1, "Thanh toán tiền mặt"
-    #     Online = 2, "Thanh toán online"
-    #
-    #     payment_method_choices = [
-    #         ('COD', 'Cash On Delivery'),
-    #         ('PAYPAL', 'PayPal'),
-    #         ('STRIPE', 'Stripe'),
-    #         ('MOMO', 'MoMo'),
-    #         ('ZALOPAY', 'ZaloPay'),
-    #     ]
-    #     name = models.CharField(max_length=20, choices=payment_method_choices)
-    #     description = models.TextField(blank=True, null=True)
-    #     is_active = models.BooleanField(default=True)
-    #     icon = models.ImageField(upload_to='payment_icons/', blank=True, null=True)
-    #
-    #     def __str__(self):
-    #         return self.get_name_display()
-    #
-    # total_amount = models.DecimalField(max_digits=10, decimal_places=0)
-    #
-    # class PaymentStatus(models.TextChoices):
-    #     status_choices = [
-    #         ('pending', 'Chờ thanh toán'),
-    #         ('completed', 'Thanh toán thành công'),
-    #         ('failed', 'Thanh toán thất bại'),
-    #         ('refunded', 'Hoàn tiền'),
-    #     ]
-    #
-    # order = models.ForeignKey('commerce_order.Order', on_delete=models.CASCADE,
-    #                           related_name='payments')  # Match your actual app and model name
-    # amount = models.DecimalField(max_digits=10, decimal_places=2)
-    # payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT)
-    # status = models.CharField(max_length=10, choices=status_choices, default='PENDING')
-    # transaction_id = models.CharField(max_length=255, blank=True, null=True)
-    # payment_data = models.JSONField(blank=True, null=True)  # Store response data from payment gateways
-    # created_at = models.DateTimeField(auto_now_add=True)
-    # updated_at = models.DateTimeField(auto_now=True)
-    #
-    # order = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
-    # payment_method= models.CharField(
-    #     max_length=15,
-    #     choices=PaymentMethod.choices,
-    #     default=PaymentMethod.Cash
-    # )
-    # payment_status = models.CharField(
-    #     max_length=15,
-    #     choices=PaymentStatus.choices,
-    #     default=PaymentStatus.PENDING
-    # )
-    #
-    # def __str__(self):
-    #     return f"Payment #{self.id} - {self.get_status_display()}"
-
-
 class Meta:
     ordering = ['-created_date']
 
