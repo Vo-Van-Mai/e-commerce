@@ -9,6 +9,8 @@ from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 from ckeditor.fields import RichTextField
 from unicodedata import category
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 
 class User(AbstractUser):
@@ -129,51 +131,37 @@ class OrderDetail(BaseModel):
 
 
 class Payment(BaseModel):
-    PAYMENT_METHOD_CHOICES = [
-        ('COD', 'Cash On Delivery'),
-        ('PAYPAL', 'PayPal'),
-        ('STRIPE', 'Stripe'),
-        ('MOMO', 'MoMo'),
-        ('ZALOPAY', 'ZaloPay'),
+    payment_method_choices = [
+        ('cod', 'Cash On Delivery'),
+        ('paypal', 'PayPal'),
+        ('stripe', 'Stripe'),
+        ('momo', 'MoMo'),
+        ('zalopay', 'ZaloPay'),
     ]
 
-    STATUS_CHOICES = [
-        ('PENDING', 'Pending'),
-        ('COMPLETED', 'Completed'),
-        ('FAILED', 'Failed'),
-        ('REFUNDED', 'Refunded'),
+    payment_status_choices = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
     ]
 
-    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='payments')
+    order = models.ForeignKey('order', on_delete=models.CASCADE, related_name='payment')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
+    method = models.CharField(max_length=20, choices=payment_method_choices)
+    status = models.CharField(max_length=20, choices=payment_status_choices, default='pending')
     transaction_id = models.CharField(max_length=255, blank=True, null=True)
-    payment_date = models.DateTimeField(blank=True, null=True)
+    payment_details = models.JSONField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Additional fields for payment gateway specific data
-    gateway_response = models.JSONField(blank=True, null=True)  # Stores any response from payment gateway
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = _('Payment')
+        verbose_name_plural = _('Payments')
 
     def __str__(self):
-        return f"Payment #{self.id} - {self.get_status_display()} via {self.get_payment_method_display()}"
-
-    def mark_as_completed(self):
-        """Mark payment as completed and update related order"""
-        self.status = 'COMPLETED'
-        self.payment_date = timezone.now()
-        self.save()
-
-        # Update order status to processing
-        order = self.order
-        order.status = 'PROCESSING'
-        order.save()
-
-    def mark_as_failed(self):
-        """Mark payment as failed"""
-        self.status = 'FAILED'
-        self.save()
+        return f"{self.method} payment for order {self.order.id}"
 
 class Meta:
     ordering = ['-created_date']
