@@ -14,9 +14,7 @@ from django.conf import settings
 class User(AbstractUser):
     phone = models.CharField(max_length=15, unique=True)
     avatar = CloudinaryField(
-        'image',
-        blank=True,
-        null=True
+        'image'
     )
 
     class GenderUser(models.TextChoices):

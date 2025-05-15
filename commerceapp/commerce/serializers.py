@@ -50,10 +50,10 @@ class UserSerializer(ModelSerializer):
                 "write_only": True
             },
             'avatar': {
-                       'error_messages': {
-                           'required' : 'vui lòng upload avatar (ảnh đại diện) của bạn!!'
-                       }
-                   }
+               'error_messages': {
+                   'required' : 'vui lòng upload avatar (ảnh đại diện) của bạn!!'
+               }
+           }
         }
 
 
