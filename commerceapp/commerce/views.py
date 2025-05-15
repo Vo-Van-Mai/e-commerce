@@ -5,18 +5,17 @@ import json
 import uuid
 import stripe
 from datetime import time
+
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from gc import get_objects
+from http.client import responses
 from pickle import FALSE
 from urllib.request import Request
 # from tarfile import TruncatedHeaderError
 from xmlrpc.client import ResponseError
 
-from cryptography.hazmat.primitives import hmac
-from django.contrib.auth.decorators import login_required
-from django.contrib.sites import requests
-from django.http import HttpResponse, JsonResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.http import HttpResponse
 from rest_framework import viewsets, permissions, generics, status, parsers
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -26,8 +25,8 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.serializers import ValidationError
 from unicodedata import category
 
-from .models import Category, Product, Comment, User, Role, Shop, ShopProduct, Payment
-from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer, ShopSerializer, ShopProductSerializer, PaymentSerializer, PaymentInitSerializer, PaymentVerifySerializer
+from .models import Category, Product, Comment, User, Shop, ShopProduct, Payment, Like
+from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer, ShopSerializer, ShopProductSerializer, PaymentSerializer, PaymentInitSerializer, PaymentVerifySerializer, LikeSerializer
 from .services import PaymentFactory
 from . import serializers, paginator
 from . import permission
@@ -58,12 +57,12 @@ class CategoryViewSet(viewsets.ModelViewSet):
             return Response(ProductSerializer(product, many=True).data, status.HTTP_200_OK )
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.filter(active=True)
+    queryset = Product.objects.prefetch_related('shopproduct_set').filter(active=True)
     serializer_class = serializers.ProductSerializer
     pagination_class = paginator.ItemPaginator
 
     def get_permissions(self):
-        if self.action.__eq__('get_comments') and self.request.method.__eq__('POST'):
+        if self.action in ['get_commments', 'get_rating'] and self.request.method.__eq__('POST'):
             return [permissions.IsAuthenticated()]
         if self.action in ["create", "update", "partial_update", "destroy"]:
             return [permission.IsSeller()]
@@ -72,14 +71,35 @@ class ProductViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         query = self.queryset
         #tim san pham theo ten
-        q = self.request.query_params.get('q')
-        if q:
-            query = query.filter(name__icontains=q)
+        name = self.request.query_params.get('name')
+        if name:
+            query = query.filter(name__icontains=name)
 
         #tim san pham theo danh muc
         cate_id = self.request.query_params.get('cate_id')
         if cate_id:
-            query = query.filter(category_id = cate_id)
+            query = query.filter(category__id = cate_id)
+
+        # Lọc theo khoảng giá từ bảng trung gian ShopProduct
+        min_price = self.request.query_params.get('min_price')
+        max_price = self.request.query_params.get('max_price')
+        if min_price:
+            query = query.filter(shopproduct__price__gte=min_price)
+        if max_price:
+            query = query.filter(shopproduct__price__lte=max_price)
+
+        #Lọc theo shop
+        shop = self.request.query_params.get('shop')
+        if shop:
+            query = query.filter(shop__id=shop)
+
+        #sắp xếp theo giá
+        ordering = self.request.query_params.get('ordering')
+        if ordering == 'price':
+            query = query.order_by('shopproduct__price')
+        elif ordering == '-price':
+            query = query.order_by('-shopproduct__price')
+
         return query
 
     def perform_create(self, serializer):
@@ -103,6 +123,40 @@ class ProductViewSet(viewsets.ModelViewSet):
             else:
                 return Response(CommentSerializer(comments, many = True).data, status=status.HTTP_200_OK)
 
+    @action(methods=['get','post'], detail=True, url_path="rating")
+    def get_rating(self, request, pk):
+        product = self.get_object()
+
+        if request.method.__eq__('POST'):
+            star = request.data.get('star')
+            if not star:
+                return Response({'error': 'Thiếu dữ liệu đánh giá (star)'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Kiểm tra đánh giá đã tồn tại chưa
+            like, created = Like.objects.get_or_create(
+                user=request.user,
+                product=product,
+                defaults={'star': star}
+            )
+
+            if not created:
+                # Nếu đã tồn tại thì cập nhật số sao
+                like.star = star
+                like.save()
+                return Response(LikeSerializer(like).data, status=status.HTTP_200_OK)
+
+            return Response(LikeSerializer(like).data, status=status.HTTP_201_CREATED)
+
+        else:
+            star = product.like_set.select_related('user').filter(active=True).order_by('-id')
+            p = paginator.ProductPaginator()
+            page = p.paginate_queryset(star, self.request)
+            if page:
+                s = LikeSerializer(page, many=True)
+                return p.get_paginated_response(s.data)
+            else:
+                return Response(LikeSerializer(star, many=True).data, status=status.HTTP_200_OK)
+
 
 class UserViewSet(viewsets.ViewSet):
     queryset = User.objects.filter(is_active=True)
@@ -114,8 +168,7 @@ class UserViewSet(viewsets.ViewSet):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            role = Role.objects.get(name=role_name)
-            user.role = role
+            user.role = role_name
             user.is_staff= is_staff
             user.save()
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
@@ -149,7 +202,7 @@ class UserViewSet(viewsets.ViewSet):
     #Lấy danh sách người dùng là seller đang chờ duyệt
     @action(methods=['get'], url_path='pending-seller', detail=False, permission_classes=[permission.IsAdminOrStaff])
     def get_pending_seller(self, request):
-        role = Role.objects.get(name='seller')
+        role = 'seller'
         pending_user = User.objects.filter(is_verified_seller=False, role=role)
         return Response(UserSerializer(pending_user, many=True).data, status=status.HTTP_200_OK)
 
@@ -348,5 +401,15 @@ class PaymentViewSet(viewsets.ModelViewSet):
         return Response({
             'methods': [{'value': k, 'label': v} for k, v in Payment.PAYMENT_METHOD_CHOICES]
         })
+class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
+    queryset = Comment.objects.filter(active=True)
+    serializer_class = CommentSerializer
+    permission_classes = [permission.IsCommentOwner]
+
+
+class likeViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
+    queryset = Like.objects.filter(active=True)
+    serializer_class = LikeSerializer
+    permission_classes = [permission.IsRatingOwner]
 
 

@@ -3,7 +3,7 @@ from collections import Counter
 from django.db.models import Count
 from django.utils.html import mark_safe
 from django.contrib import admin
-from .models import Product, User, Role, Category, Shop, Order, OrderDetail, Payment, Comment, Like, ChatMessage, Conversation, ShopProduct
+from .models import Product, User, Category, Shop, Order, OrderDetail, Payment, Comment, Like, ChatMessage, Conversation, ShopProduct
 from django.template.response import TemplateResponse
 from django.urls import path
 from django import forms
@@ -63,7 +63,6 @@ admin_site = MyAdminSite(name='eCommerce')
 # Register your models here.
 admin_site.register(Product, MyProductAdmin)
 admin_site.register(User)
-admin_site.register(Role, MyRoleAdmin)
 admin_site.register(Category)
 admin_site.register(Shop)
 admin_site.register(Order)
