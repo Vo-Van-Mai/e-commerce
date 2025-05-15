@@ -9,6 +9,7 @@ from ckeditor.fields import RichTextField
 from unicodedata import category
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
+from django.utils.timezone import now
 
 
 class User(AbstractUser):
@@ -132,13 +133,13 @@ class Payment(BaseModel):
     ]
 
     order = models.ForeignKey('order', on_delete=models.CASCADE, related_name='payment')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     method = models.CharField(max_length=20, choices=payment_method_choices)
     status = models.CharField(max_length=20, choices=payment_status_choices, default='pending')
     transaction_id = models.CharField(max_length=255, blank=True, null=True)
     payment_details = models.JSONField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(default=now, editable=False)
+    updated_at = models.DateTimeField(default=now, editable=False)
 
     class Meta:
         ordering = ['-created_at']

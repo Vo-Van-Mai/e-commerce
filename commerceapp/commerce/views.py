@@ -399,8 +399,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
         Get available payment methods
         """
         return Response({
-            'methods': [{'value': k, 'label': v} for k, v in Payment.PAYMENT_METHOD_CHOICES]
+            'methods': [{'value': k, 'label': v} for k, v in Payment.payment_method_choices]
         })
+
 class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
     queryset = Comment.objects.filter(active=True)
     serializer_class = CommentSerializer

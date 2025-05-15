@@ -112,6 +112,7 @@ class PaymentVerifySerializer(serializers.Serializer):
     payment_id = serializers.IntegerField()
     transaction_id = serializers.CharField(required=False)
     payment_data = serializers.JSONField(required=False)
+
 class LikeSerializer(ModelSerializer):
     class Meta:
         model = Like
