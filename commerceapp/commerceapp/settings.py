@@ -56,8 +56,8 @@ INSTALLED_APPS = [
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': ['oauth2_provider.contrib.rest_framework.OAuth2Authentication']
 }
-CLIENT_ID = 'rcZ42IEvXLP3Vwp9k9eBdp64xzCDIfVdVtYe5nZB'
-CLIENT_SECRET = '1jMGrQbHXC9dFfUiVEmgwXqluywGoQXg3503zzt4RMBkW4D4ExbgTW1AsgliujvyCv2xyzYNvQJvuqBG6SqmPl6EMtdtEZST5pmJtqHwlIvvIzftMVAjVwKYk8a2lrY2'
+CLIENT_ID = 'G16vKHi6LnNtkusfK9TlrAtwYzlDN3i1QylKHw5D'
+CLIENT_SECRET = 'nh3LYFxNJjbgIopCND7Hv6KEmau8m9iE9U7mOqqFSYWoYspqTQiCCjgjIH5GTLNFcRC2Yvp3wbp9ZjZJ2dgO984NiYUmn9vlQcFXfgbE1EbjPslOVo05XZtLoCtZ8rwt'
 OAUTH2_PROVIDER = {
     'OAUTH2_BACKEND_CLASS': 'oauth2_provider.oauth2_backends.JSONOAuthLibCore'
 }
