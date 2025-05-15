@@ -414,3 +414,4 @@ class likeViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIV
     permission_classes = [permission.IsRatingOwner]
 
 
+

@@ -11,6 +11,7 @@ class CategorySerializer(ModelSerializer):
 
 
 class ProductSerializer(ModelSerializer):
+
     #ghi de lai de can thiep du lieu dau ra
     def to_representation(self, instance):
         data = super().to_representation(instance)

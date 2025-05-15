@@ -74,6 +74,7 @@ class Shop(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="shop")
     products = models.ManyToManyField(Product, related_name='shops', blank=True, through='ShopProduct')
     avatar = CloudinaryField('image', null=True)
+
     def __str__(self):
         return self.name
 
@@ -83,9 +84,11 @@ class ShopProduct(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name="Giá")
     quantity = models.IntegerField(default=0)
+
     class ProductStatus(models.TextChoices):
         AVAILABLE = "available", "Còn hàng"
         SOLD_OUT = "sold_out", "Hết hàng"
+
     status = models.CharField(
         max_length=20,
         choices=ProductStatus.choices,  # gan gia tri trong enum cho status
@@ -107,10 +110,12 @@ class Order(BaseModel):
     def __str__(self):
         return self.user
 
+
 class OrderDetail(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='order_details')
     shop_product = models.ForeignKey(ShopProduct, on_delete=models.CASCADE, related_name='order_details')
     quantity = models.IntegerField()
+    price = models.DecimalField(max_digits=10, decimal_places=0)
 
     def __str__(self):
         return f"{self.shop_product.product.name} x{self.quantity} for Order #{self.order.id}"
@@ -160,6 +165,7 @@ class Review(BaseModel):
     class Meta:
         abstract = True
 
+
 class Comment(Review):
     content = models.TextField(max_length=255)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
@@ -167,23 +173,23 @@ class Comment(Review):
     def __str__(self):
         return self.content
 
+
 class Like(Review):
     star = models.IntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['user', 'product'], name='unique_user_product_like')
-        ]
     def __str__(self):
         return str(self.star)
+
 
 class Conversation(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations')
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, related_name='conversations')
+
     class Meta:
         constraints = [
             models.UniqueConstraint(fields=['user', 'shop'], name='unique_user_shop_conversation')
         ]
+
 
 class ChatMessage(BaseModel):
     conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='messages')
