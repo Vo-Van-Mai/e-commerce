@@ -2,7 +2,7 @@ from itertools import product
 
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
-from .models import Category, Product, Comment, User, Shop, ShopProduct, Like, Cart, CartItem
+from .models import Category, Product, Comment, User, Shop, ShopProduct, Like, Cart, CartItem, Payment
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -96,6 +96,22 @@ class ShopProductSerializer(ModelSerializer):
         shopproduct = ShopProduct.objects.create(product=product, **validated_data)
         return shopproduct
 
+class PaymentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = ['id', 'order', 'amount', 'method', 'status',
+                  'transaction_id', 'payment_details', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'transaction_id', 'status', 'created_at', 'updated_at']
+
+class PaymentInitSerializer(serializers.Serializer):
+    order_id = serializers.IntegerField()
+    method = serializers.ChoiceField(choices=Payment.payment_method_choices)
+    return_url = serializers.URLField(required=False)
+
+class PaymentVerifySerializer(serializers.Serializer):
+    payment_id = serializers.IntegerField()
+    transaction_id = serializers.CharField(required=False)
+    payment_data = serializers.JSONField(required=False)
 class LikeSerializer(ModelSerializer):
     class Meta:
         model = Like

@@ -1,5 +1,6 @@
 from django.urls import path, include
-from . import  views
+from . import views, admin
+from . import webhooks
 from rest_framework import routers
 
 r = routers.DefaultRouter()
@@ -10,6 +11,16 @@ r.register('shops', views.ShopViewSet, basename='shops')
 r.register('shop-products', views.ShopProductViewSet, basename='shopproduct')
 r.register('comments', views.CommentViewSet, basename='comments')
 r.register('likes', views.likeViewSet, basename='likes')
+r.register('payments', views.PaymentViewSet)
+
 urlpatterns = [
     path('', include(r.urls))
+]
+
+# URL patterns for payment API
+urlpatterns = [
+    path('', include(r.urls)),
+    path('webhooks/stripe/', webhooks.stripe_webhook, name='stripe-webhook'),
+    path('webhooks/momo/', webhooks.momo_webhook, name='momo-webhook'),
+    path('webhooks/zalopay/', webhooks.zalopay_webhook, name='zalopay-webhook')
 ]

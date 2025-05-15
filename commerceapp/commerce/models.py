@@ -6,6 +6,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from cloudinary.models import CloudinaryField
 from ckeditor.fields import RichTextField
+from unicodedata import category
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 
 class User(AbstractUser):
@@ -113,29 +116,40 @@ class OrderDetail(BaseModel):
 
 
 class Payment(BaseModel):
-    class PaymentMethod(models.IntegerChoices):
-        Cash = 1, "Thanh toán tiền mặt"
-        Online = 2, "Thanh toán online"
+    payment_method_choices = [
+        ('cod', 'Cash On Delivery'),
+        ('paypal', 'PayPal'),
+        ('stripe', 'Stripe'),
+        ('momo', 'MoMo'),
+        ('zalopay', 'ZaloPay'),
+    ]
 
-    total_amount = models.DecimalField(max_digits=10, decimal_places=0)
+    payment_status_choices = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded'),
+    ]
 
-    class PaymentStatus(models.TextChoices):
-        PENDING = "pending", "Đang chờ"
-        COMPLETED = "completed", "Đã thanh toán"
-        FAILED = "failed", "Thanh toán thất bại"
+    order = models.ForeignKey('order', on_delete=models.CASCADE, related_name='payment')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    method = models.CharField(max_length=20, choices=payment_method_choices)
+    status = models.CharField(max_length=20, choices=payment_status_choices, default='pending')
+    transaction_id = models.CharField(max_length=255, blank=True, null=True)
+    payment_details = models.JSONField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, primary_key=True)
-    payment_method = models.IntegerField(
-        choices=PaymentMethod.choices,
-        default=PaymentMethod.Cash
-    )
-    payment_status = models.CharField(
-        max_length=15,
-        choices=PaymentStatus.choices,
-        default=PaymentStatus.PENDING
-    )
     class Meta:
-        ordering = ['-created_date']
+        ordering = ['-created_at']
+        verbose_name = _('Payment')
+        verbose_name_plural = _('Payments')
+
+    def __str__(self):
+        return f"{self.method} payment for order {self.order.id}"
+
+class Meta:
+    ordering = ['-created_date']
 
 
 class Review(BaseModel):

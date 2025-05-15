@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'drf_yasg',
     'oauth2_provider',
     'corsheaders',
+    'paypal.standard.ipn',
+    'payment'
 ]
 
 
@@ -168,3 +170,29 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Payment Gateway Settings
+
+# PayPal Settings
+PAYPAL_MODE = 'sandbox'  # sandbox or live
+PAYPAL_CLIENT_ID = 'YOUR_PAYPAL_CLIENT_ID'
+PAYPAL_CLIENT_SECRET = 'YOUR_PAYPAL_CLIENT_SECRET'
+
+# Stripe settings
+STRIPE_PUBLISHABLE_KEY = 'pk_test_your_publishable_key'
+STRIPE_SECRET_KEY = 'sk_test_your_secret_key'
+STRIPE_WEBHOOK_SECRET = 'whsec_your_webhook_secret'
+
+# Momo settings
+MOMO_PARTNER_CODE = 'your_partner_code'
+MOMO_ACCESS_KEY = 'your_access_key'
+MOMO_SECRET_KEY = 'your_secret_key'
+MOMO_API_ENDPOINT = 'https://test-payment.momo.vn/v2/gateway'
+MOMO_NOTIFY_URL = 'https://your-domain.com/api/payment/webhooks/momo/'
+
+# ZaloPay settings
+ZALOPAY_APP_ID = 'your_app_id'
+ZALOPAY_KEY1 = 'your_key1'
+ZALOPAY_KEY2 = 'your_key2'
+ZALOPAY_API_ENDPOINT = 'https://sandbox.zalopay.com.vn/v001/tpe/createorder'
+

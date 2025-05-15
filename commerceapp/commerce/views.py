@@ -1,3 +1,13 @@
+import base64
+from abc import ABC, abstractmethod
+import hashlib
+import json
+import uuid
+import stripe
+from datetime import time
+
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from gc import get_objects
 from http.client import responses
 from pickle import FALSE
@@ -15,11 +25,13 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.serializers import ValidationError
 from unicodedata import category
 
-from .models import Category, Product, Comment, User, Shop, ShopProduct, Like
-from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer, ShopSerializer, \
-    ShopProductSerializer, LikeSerializer
+from .models import Category, Product, Comment, User, Shop, ShopProduct, Payment, Like
+from .serializers import CategorySerializer, ProductSerializer, CommentSerializer, UserSerializer, ShopSerializer, ShopProductSerializer, PaymentSerializer, PaymentInitSerializer, PaymentVerifySerializer, LikeSerializer
+from .services import PaymentFactory
 from . import serializers, paginator
 from . import permission
+from django.conf import settings
+
 
 def index(request):
     return HttpResponse("E-commerce")
@@ -284,6 +296,111 @@ class ShopProductViewSet(viewsets.ModelViewSet):
         serializer.save(shop=shop)
 
 
+class PaymentViewSet(viewsets.ModelViewSet):
+    """ViewSet for viewing and editing Payment instances"""
+    queryset = Payment.objects.all()
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """
+        This view should return a list of all payments
+        for the currently authenticated user.
+        """
+        user = self.request.user
+
+        # If staff, return all payments
+        if user.is_staff:
+            return Payment.objects.all()
+
+        # Otherwise, return only user's payments
+        return Payment.objects.filter(order__user=user)
+
+    @action(detail=False, methods=['post'])
+    def initialize(self, request):
+        """
+        Initialize a payment
+        """
+        serializer = PaymentInitSerializer(data=request.data)
+
+        if serializer.is_valid():
+            order_id = serializer.validated_data['order_id']
+            method = serializer.validated_data['method']
+            return_url = serializer.validated_data.get('return_url')
+
+            # Get the order
+            try:
+                from models import Order
+                order = Order.objects.get(id=order_id, user=request.user)
+            except Order.DoesNotExist:
+                return Response(
+                    {'error': 'Order not found or does not belong to user'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            # Create payment
+            payment = Payment.objects.create(
+                order=order,
+                amount=order.total_amount,  # Assuming Order model has total_amount field
+                method=method
+            )
+
+            # Process payment
+            processor = PaymentFactory.get_processor(method)
+            result = processor.process_payment(payment, return_url)
+
+            if result['success']:
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': result.get('message', 'Payment initialization failed')
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'])
+    def verify(self, request):
+        """
+        Verify a payment
+        """
+        serializer = PaymentVerifySerializer(data=request.data)
+
+        if serializer.is_valid():
+            payment_id = serializer.validated_data['payment_id']
+            transaction_id = serializer.validated_data.get('transaction_id')
+            payment_data = serializer.validated_data.get('payment_data')
+
+            # Get the payment
+            payment = get_object_or_404(Payment, id=payment_id)
+
+            # Check if the payment belongs to the user if not staff
+            if not request.user.is_staff and payment.order.user != request.user:
+                return Response(
+                    {'error': 'Payment does not belong to user'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+            # Verify payment
+            processor = PaymentFactory.get_processor(payment.method)
+            result = processor.verify_payment(payment, transaction_id, payment_data)
+
+            if result['success']:
+                return Response(result, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': result.get('message', 'Payment verification failed')
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'])
+    def methods(self, request):
+        """
+        Get available payment methods
+        """
+        return Response({
+            'methods': [{'value': k, 'label': v} for k, v in Payment.PAYMENT_METHOD_CHOICES]
+        })
 class CommentViewSet(viewsets.ViewSet, generics.DestroyAPIView, generics.UpdateAPIView):
     queryset = Comment.objects.filter(active=True)
     serializer_class = CommentSerializer
